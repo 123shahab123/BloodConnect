@@ -107,8 +107,8 @@ class MatchingEngine
                     )))) AS distance_km
                 FROM users u
                 JOIN districts d ON d.id = u.district_id
-                WHERE u.is_donor    = 1
-                  AND u.is_available = 1
+                WHERE u.is_donor    = true
+                  AND u.is_available = true
                   AND u.status       = 'active'
                   AND u.blood_type  IN ($btList)
                   $exclude
