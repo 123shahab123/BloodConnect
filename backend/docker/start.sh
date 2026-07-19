@@ -21,4 +21,9 @@ SUPERVISOR_PID=$!
 # as it needs without risking the deploy being killed for "no open ports."
 php artisan migrate --force || echo "WARNING: migration failed — check DB_* environment variables"
 
+# Seed reference data (provinces, districts, system config, admin account).
+# Safe to run on every deploy: every seeder here uses updateOrInsert /
+# updateOrCreate, so re-running never creates duplicate rows.
+php artisan db:seed --force || echo "WARNING: seeding failed"
+
 wait $SUPERVISOR_PID
