@@ -91,8 +91,7 @@ export default defineConfig(({ mode }) => {
             },
             // All other API calls: network first, fall back to cache for 5 min
             {
-              urlPattern: ({ url }) =>
-                url.pathname.startsWith("/api/") || url.href.includes(apiBase),
+              urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
               handler: "NetworkFirst",
               options: {
                 cacheName: "api-cache",
