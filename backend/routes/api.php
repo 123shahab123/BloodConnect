@@ -85,3 +85,23 @@ Route::prefix('admin')->group(function () {
         Route::post('/broadcast',              [AdminController::class, 'broadcast']);
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// Scheduler trigger — for free external cron services (Render's own Cron
+// Jobs have no free tier). Protected by a shared secret so it can't be
+// abused by anyone who discovers the URL. Point a free service like
+// cron-job.org at this URL every 1-5 minutes.
+// ─────────────────────────────────────────────────────────────────────────
+Route::get('/cron/run-scheduler', function (\Illuminate\Http\Request $request) {
+    if ($request->query('token') !== config('app.cron_secret')) {
+        abort(403, 'Invalid cron token');
+    }
+
+    \Illuminate\Support\Facades\Artisan::call('schedule:run');
+
+    return response()->json([
+        'ok'     => true,
+        'output' => \Illuminate\Support\Facades\Artisan::output(),
+        'ran_at' => now()->toIso8601String(),
+    ]);
+});
