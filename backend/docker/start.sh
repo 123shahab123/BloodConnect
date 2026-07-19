@@ -9,7 +9,16 @@ sed -i "s/listen 80;/listen ${PORT};/" /etc/nginx/sites-available/default
 php artisan config:cache || true
 php artisan route:cache || true
 
-# Run migrations on every deploy so schema stays in sync
-php artisan migrate --force
+# Start nginx + php-fpm FIRST so Render detects an open port immediately.
+# Running migrations before this was starving Render's port-scan timeout
+# whenever the database took a moment to respond (e.g. a cold-starting
+# free-tier Postgres instance) — the app would have come up fine a few
+# seconds later, but Render had already marked the deploy as failed.
+/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf &
+SUPERVISOR_PID=$!
 
-exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+# Now run migrations — the port is already open, so this can take as long
+# as it needs without risking the deploy being killed for "no open ports."
+php artisan migrate --force || echo "WARNING: migration failed — check DB_* environment variables"
+
+wait $SUPERVISOR_PID
