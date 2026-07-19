@@ -95,7 +95,11 @@ export default defineConfig(({ mode }) => {
               handler: "NetworkFirst",
               options: {
                 cacheName: "api-cache",
-                networkTimeoutSeconds: 10,
+                // Render's free tier can take up to ~50s to wake from a cold
+                // start. The old 10s timeout meant that first request would
+                // fall back to a stale cached response instead of waiting
+                // for the real (slow but correct) answer.
+                networkTimeoutSeconds: 55,
                 expiration: { maxAgeSeconds: 60 * 5, maxEntries: 100 },
               },
             },
