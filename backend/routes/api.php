@@ -92,7 +92,7 @@ Route::prefix('admin')->group(function () {
 // abused by anyone who discovers the URL. Point a free service like
 // cron-job.org at this URL every 1-5 minutes.
 // ─────────────────────────────────────────────────────────────────────────
-Route::get('/cron/run-scheduler', function (\Illuminate\Http\Request $request) {
+Route::match(['get', 'post'], '/cron/run-scheduler', function (\Illuminate\Http\Request $request) {
     if ($request->query('token') !== config('app.cron_secret')) {
         abort(403, 'Invalid cron token');
     }
