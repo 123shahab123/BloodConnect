@@ -3,11 +3,10 @@ import { Download, Check, Smartphone, Share } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAppStore } from "../../store";
 import { pwaInstall } from "../../lib/pwaInstall";
-import { makeLangPicker } from "../../i18n/lang";
 
 export default function PWAInstallPrompt() {
   const { language } = useAppStore();
-  const la = makeLangPicker(language);
+  const la = (fa: string, en: string) => (language === "en" ? en : fa);
 
   const [installed, setInstalled] = useState(pwaInstall.isInstalled);
   const [canPrompt, setCanPrompt] = useState(pwaInstall.canPromptInstall);
@@ -52,10 +51,17 @@ export default function PWAInstallPrompt() {
   const handleOpenApp = () => {
     // Browsers don't expose a JS API for a site to force-focus its own
     // already-installed app from a regular tab — that's a security boundary
-    // every browser enforces. Reloading the scoped start_url is the correct
-    // behavior; Chrome/Edge show their own "open app" affordance for
-    // installed PWAs automatically once this state is detected.
-    window.location.href = "/";
+    // every browser enforces, not something we can code around. Silently
+    // reloading the page here previously just looked broken (nothing visibly
+    // happens when you're already on "/"), so tell the person plainly where
+    // to actually find the app instead.
+    toast(
+      la(
+        "این اپ قبلاً نصب شده — آن را از صفحه اصلی گوشی یا لیست اپ‌ها باز کنید",
+        "Already installed — open it from your home screen or app list",
+      ),
+      { icon: "📲", duration: 4000 },
+    );
   };
 
   // ── Already installed ────────────────────────────────────────────────────
@@ -63,7 +69,7 @@ export default function PWAInstallPrompt() {
     return (
       <button
         onClick={handleOpenApp}
-        className="fixed top-4 end-4z z-[60] flex items-center gap-1.5 rounded-full
+        className="fixed top-4 end-4 z-[60] flex items-center gap-1.5 rounded-full
                    bg-white border border-gray-200 px-3.5 py-2 text-xs font-bold
                    text-neutral-dark shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
@@ -101,9 +107,7 @@ export default function PWAInstallPrompt() {
         {label}
       </button>
 
-      {showIosGuide && (
-        <IosGuideSheet la={la} onClose={() => setShowIosGuide(false)} />
-      )}
+      {showIosGuide && <IosGuideSheet la={la} onClose={() => setShowIosGuide(false)} />}
     </>
   );
 }
@@ -114,7 +118,7 @@ function IosGuideSheet({
   la,
   onClose,
 }: {
-  la: (fa: string, en: string, ps?: string) => string;
+  la: (fa: string, en: string) => string;
   onClose: () => void;
 }) {
   const steps = [
@@ -137,10 +141,7 @@ function IosGuideSheet({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center sm:justify-center">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div className="relative w-full sm:max-w-sm bg-white rounded-t-[28px] sm:rounded-[28px] px-6 pt-3 pb-6 pb-safe shadow-2xl animate-slide-up">
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
         <div className="flex items-center justify-between mb-5">
@@ -161,10 +162,7 @@ function IosGuideSheet({
         </div>
         <div className="space-y-3 mb-5">
           {steps.map(({ icon, fa, en }, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 bg-neutral-light rounded-xl px-3.5 py-3"
-            >
+            <div key={i} className="flex items-center gap-3 bg-neutral-light rounded-xl px-3.5 py-3">
               <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 text-xs font-bold text-blood shadow-sm">
                 {i + 1}
               </div>

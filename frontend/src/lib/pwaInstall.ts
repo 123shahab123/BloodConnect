@@ -35,14 +35,21 @@ function notify() {
   listeners.forEach((fn) => fn());
 }
 
-function markInstalled() {
-  installed = true;
-  deferredEvent = null;
-  localStorage.setItem(INSTALLED_KEY, "1");
+function setInstalled(value: boolean) {
+  installed = value;
+  if (value) {
+    deferredEvent = null;
+    localStorage.setItem(INSTALLED_KEY, "1");
+  } else {
+    localStorage.removeItem(INSTALLED_KEY);
+  }
   notify();
 }
 
-// Initial synchronous check (covers "already installed" on this load)
+// Initial synchronous guess, used only until the real check below resolves.
+// A previous "installed" flag can be stale (e.g. the user uninstalled the
+// app since their last visit — uninstalling doesn't clear localStorage),
+// so this is a starting assumption, not the final answer.
 if (isInStandaloneMode() || localStorage.getItem(INSTALLED_KEY) === "1") {
   installed = true;
 }
@@ -53,20 +60,28 @@ window.addEventListener("beforeinstallprompt", (e: Event) => {
   notify();
 });
 
-window.addEventListener("appinstalled", () => markInstalled());
+window.addEventListener("appinstalled", () => setInstalled(true));
 
-// Best-effort async check via getInstalledRelatedApps (Chrome/Edge only)
-if (!installed && "getInstalledRelatedApps" in navigator) {
+// Authoritative real-time check (Chrome/Edge). Unlike the localStorage flag,
+// this reflects whether the app is ACTUALLY installed right now — so it can
+// both confirm an install and correct a stale flag after an uninstall.
+// Currently running in standalone mode is left alone: that's already 100%
+// certain truth and doesn't need re-checking.
+if (!isInStandaloneMode() && "getInstalledRelatedApps" in navigator) {
   (navigator as any)
     .getInstalledRelatedApps()
     .then((apps: unknown[]) => {
-      if (apps && apps.length > 0) markInstalled();
+      setInstalled(Boolean(apps && apps.length > 0));
     })
-    .catch(() => {});
+    .catch(() => {
+      // Unsupported/failed check — leave the best-effort localStorage guess
+      // as-is rather than assuming either state.
+    });
 }
 
 export const pwaInstall = {
   isIOS,
+  isInStandaloneMode,
   get isInstalled() {
     return installed;
   },
@@ -87,7 +102,7 @@ export const pwaInstall = {
     await evt.prompt();
     const { outcome } = await evt.userChoice;
     if (outcome === "accepted") {
-      markInstalled();
+      setInstalled(true);
       return true;
     }
     notify();
