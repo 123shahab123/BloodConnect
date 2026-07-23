@@ -12,7 +12,7 @@ class AdminSeeder extends Seeder
         Admin::updateOrCreate(
             ['email' => 'admin@bloodconnect.af'],
             [
-                'password'  => 'shahab123456789000',
+                'password'  => env('ADMIN_SEED_PASSWORD', 'shahab123456789000'),
                 'full_name' => 'Shahab Noori',
                 'role'      => 'super_admin',
                 'is_active' => true,

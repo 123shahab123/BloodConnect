@@ -18,9 +18,10 @@ class DatabaseSeeder extends Seeder
         $this->command->info('');
         $this->command->info('✨ BloodConnect database seeded successfully!');
         $this->command->info('');
-        $this->command->info('   Admin login:');
-        $this->command->info('   Email:    admin@bloodconnect.af');
-        $this->command->info('   Password: BloodConnect@Admin2026!');
+        $this->command->info('   Admin email: admin@bloodconnect.af');
+        $this->command->info('   Admin password: set via ADMIN_SEED_PASSWORD env var');
+        $this->command->info('   (falls back to the default in AdminSeeder.php if unset —');
+        $this->command->info('   set ADMIN_SEED_PASSWORD in Render for a real deployment)');
         $this->command->info('');
     }
 }

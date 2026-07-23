@@ -21,8 +21,11 @@ Route::get('/health', fn() => response()->json([
 
 // ── Auth (public) ─────────────────────────────────────────────────────────────
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login',    [AuthController::class, 'login']);
+    // Rate limited: 5 attempts per minute per IP — brute-force protection.
+    // Previously these had none, which we flagged in an earlier audit but
+    // never actually fixed until now.
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/refresh',  [AuthController::class, 'refresh'])->middleware('jwt');
     Route::post('/logout',   [AuthController::class, 'logout'])->middleware('jwt');
 });
@@ -66,7 +69,7 @@ Route::middleware('jwt')->group(function () {
 
 // ── Admin routes ──────────────────────────────────────────────────────────────
 Route::prefix('admin')->group(function () {
-    Route::post('/login', [AdminController::class, 'login']);
+    Route::post('/login', [AdminController::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware('admin')->group(function () {
         Route::get('/dashboard',               [AdminController::class, 'dashboard']);
